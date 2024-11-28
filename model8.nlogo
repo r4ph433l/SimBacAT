@@ -1,10 +1,8 @@
-globals [
-  sugar
-]
 breed [bacteria bacterium]
 
 bacteria-own [
  energy
+ resistance
 ]
 
 to setup
@@ -12,10 +10,10 @@ to setup
   create-bacteria initial-population [
     set shape "circle"
     set energy random generation-time
-    set color (energy * 9) / generation-time + 11
+    set resistance initial-resistance
+    set color (5 - resistance * 0.05) + 14
     setxy random-xcor random-ycor
   ]
-  set sugar sugar-level
   reset-ticks
 end
 
@@ -29,22 +27,18 @@ to go
     ]
   ][ask bacteria [expire]]
   if count bacteria = 0 [stop]
-  set sugar sugar-level
   tick
 end
 
 to consume
-  if sugar > 0 [
-    set sugar sugar - 1
-    set energy energy + 2
-    set color (energy * 9) / generation-time + 11
+  if random-float 1 > (count bacteria / max_od) [
+   set energy energy + 1
   ]
 end
 
 to move
-  right random 360
-  forward 5
-  set energy energy - 1
+  right random 20 - 10
+  forward 0.2
 end
 
 to divide
@@ -56,14 +50,14 @@ end
 
 to expire
   if energy <= 0 [die]
-  if random 100 < antibiotica [die]
+  if random 100 < antibiotica * (100 - resistance) / 100 [die]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-320
-10
-757
-448
+315
+5
+752
+443
 -1
 -1
 13
@@ -139,23 +133,12 @@ PENS
 "Pen 1" 1 0 -16579837 true "plot count bacteria" "plot count bacteria"
 
 INPUTBOX
-165
-155
-310
-215
-sugar-level
-100
-1
-0
-Number
-
-INPUTBOX
 5
 155
 150
 215
 initial-population
-100
+20
 1
 0
 Number
@@ -166,7 +149,7 @@ INPUTBOX
 150
 345
 generation-time
-20
+10
 1
 0
 Number
@@ -177,7 +160,7 @@ INPUTBOX
 150
 280
 lag-phase
-10
+100
 1
 0
 Number
@@ -196,6 +179,32 @@ antibiotica
 1
 NIL
 HORIZONTAL
+
+SLIDER
+5
+350
+150
+383
+initial-resistance
+initial-resistance
+0
+100
+0
+1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+165
+155
+310
+215
+max_od
+400
+1
+0
+Number
 @#$#@#$#@
 ## WHAT IS IT?
 
