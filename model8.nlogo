@@ -31,18 +31,19 @@ to go
 end
 
 to consume
-  if random-float 1 > (count bacteria / max_od) [
-   set energy energy + 1
+  if energy < generation-time [
+   set energy energy + 2
   ]
 end
 
 to move
   right random 20 - 10
   forward 0.2
+  set energy energy - 1
 end
 
 to divide
-  if energy >= generation-time [
+  if energy >= generation-time and random-float 1 > (count bacteria / max_od)[
    set energy energy / 2
    hatch 1 [right random 360 forward 1]
   ]
