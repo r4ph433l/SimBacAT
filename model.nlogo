@@ -1,57 +1,76 @@
+globals [
+  density ; value in [0,1] , 1 is max-od
+]
+
 breed [bacteria bacterium]
 
 bacteria-own [
- energy
- resistance
+  time ; time till last cell-division
+  resistance
 ]
 
 to setup
   clear-all
   create-bacteria initial-population [
     set shape "circle"
-    set energy random generation-time
+    set time 0
     set resistance initial-resistance
-    set color (5 - resistance * 0.05) + 14
     setxy random-xcor random-ycor
+    update-color
   ]
   reset-ticks
 end
 
 to go
-  ifelse ticks > lag-phase [
+  set density current-density
+  ifelse ticks > lag-phase 
+  [ ; after lag phase
     ask bacteria [
-      consume
       move
       divide
       expire
+      update-color 
     ]
-  ][ask bacteria [expire]]
+  ][ ; during lag phase
+    ask bacteria [ 
+      expire
+    ]
+  ]
   if count bacteria = 0 [stop]
   tick
 end
 
-to consume
-  if energy < generation-time [
-   set energy energy + 2
-  ]
-end
-
 to move
   right random 20 - 10
-  forward 0.2
-  set energy energy - 1
+  forward 0.1
 end
 
 to divide
-  if energy >= generation-time and random-float 1 > (count bacteria / max_od)[
-   set energy energy / 2
-   hatch 1 [right random 360 forward 1]
+  ifelse time >= generation-time 
+  [
+    if random-float 1 > density
+      [
+      set time 0
+  		hatch 1 [right random 360 forward 1 set time 0]
+      ]
   ]
+  [set time time + 1]
 end
 
 to expire
-  if energy <= 0 [die]
+  if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
   if random 100 < antibiotica * (100 - resistance) / 100 [die]
+end
+
+to-report current-density ; get current density
+  report count bacteria / max-od
+end
+
+to update-color ; calculate color based on input mode
+  if color-mode = "time"
+    [set color (time / generation-time) * 6.0 + 12]
+  if color-mode = "resistance"
+    [set color (5 - resistance * 0.05) + 14]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -137,18 +156,18 @@ INPUTBOX
 5
 155
 150
-215
+198
 initial-population
-20
+40
 1
 0
 Number
 
 INPUTBOX
 5
-285
+280
 150
-345
+323
 generation-time
 10
 1
@@ -157,20 +176,20 @@ Number
 
 INPUTBOX
 5
-220
+235
 150
-280
+278
 lag-phase
-100
+10
 1
 0
 Number
 
 SLIDER
-165
-220
-310
-253
+160
+205
+305
+238
 antibiotica
 antibiotica
 0
@@ -183,9 +202,9 @@ HORIZONTAL
 
 SLIDER
 5
-350
+200
 150
-383
+233
 initial-resistance
 initial-resistance
 0
@@ -197,12 +216,33 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-165
-155
-310
-215
-max_od
+5
+325
+150
+368
+max-od
 400
+1
+0
+Number
+
+CHOOSER
+160
+325
+305
+370
+color-mode
+color-mode
+"time" "resistance"
+0
+
+INPUTBOX
+160
+155
+305
+198
+immune-efficiency
+0.04
 1
 0
 Number
