@@ -51,10 +51,20 @@ to divide
     if random-float 1 > density
       [
       set time 0
-  		hatch 1 [right random 360 forward 1 set time 0]
+		hatch 1 [right random 360 forward 1 set time 0 mutate]
       ]
   ]
   [set time time + 1]
+end
+
+to mutate
+  if random mutation-period = 0
+  [
+    ifelse random 2 = 0
+    [
+      set resistance min list 100 (resistance + 10)
+    ] [set resistance max list 0 (resistance - 10)]
+  ]
 end
 
 to expire
@@ -72,12 +82,23 @@ to update-color ; calculate color based on input mode
   if color-mode = "resistance"
     [set color (5 - resistance * 0.05) + 14]
 end
+
+to-report freq [ i_ list_ ]
+  report length filter [ ind -> ind = i_ ] list_
+end
+
+to-report freq_map [ list_ ]
+  let len length list_
+  let uniques remove-duplicates list_
+  let counts map [i -> freq i list_ ] uniques
+  report (map [ [ x y ] -> list x ( y / len ) ] uniques counts )
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-315
-5
-752
-443
+345
+0
+782
+438
 -1
 -1
 13
@@ -101,10 +122,10 @@ ticks
 30
 
 BUTTON
-210
-20
-310
-70
+230
+15
+280
+63
 NIL
 setup
 NIL
@@ -118,10 +139,10 @@ NIL
 1
 
 BUTTON
-210
-90
-310
-142
+285
+15
+340
+63
 NIL
 go
 T
@@ -137,8 +158,8 @@ NIL
 PLOT
 0
 15
-200
-145
+220
+148
 bacteria
 NIL
 NIL
@@ -153,10 +174,10 @@ PENS
 "Pen 1" 1 0 -16579837 true "plot count bacteria" "plot count bacteria"
 
 INPUTBOX
-5
-155
-150
-198
+230
+70
+340
+113
 initial-population
 40
 1
@@ -164,10 +185,10 @@ initial-population
 Number
 
 INPUTBOX
-5
-280
-150
-323
+230
+170
+340
+213
 generation-time
 10
 1
@@ -175,10 +196,10 @@ generation-time
 Number
 
 INPUTBOX
-5
-235
-150
-278
+230
+120
+340
+163
 lag-phase
 10
 1
@@ -186,25 +207,25 @@ lag-phase
 Number
 
 SLIDER
-160
-205
-305
-238
+0
+300
+110
+333
 antibiotica
 antibiotica
 0
 100
-50
-1
+2
+0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-5
-200
-150
-233
+230
+270
+340
+303
 initial-resistance
 initial-resistance
 0
@@ -216,10 +237,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-5
-325
-150
-368
+230
+220
+340
+263
 max-od
 400
 1
@@ -227,25 +248,88 @@ max-od
 Number
 
 CHOOSER
-160
-325
-305
-370
+230
+390
+340
+435
 color-mode
 color-mode
 "time" "resistance"
-0
+1
 
 INPUTBOX
-160
-155
-305
-198
-immune-efficiency
-0.04
+230
+310
+340
+353
+mutation-period
+1
 1
 0
 Number
+
+PLOT
+0
+155
+220
+288
+resistance
+NIL
+NIL
+0
+101
+0
+0.6
+false
+false
+"" ""
+PENS
+"Pen 1" 1 1 -7500403 true "clear-plot foreach ( freq_map [resistance] of bacteria ) [x -> plotxy first x last x ]" "clear-plot foreach ( freq_map [resistance] of bacteria ) [x -> plotxy first x last x ]"
+
+SLIDER
+115
+300
+225
+333
+min-resistance
+min-resistance
+0
+100
+0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+115
+340
+225
+373
+max-resistance
+max-resistance
+0
+100
+100
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+0
+340
+110
+373
+immune-efficiency
+immune-efficiency
+0
+100
+0.04
+0.01
+1
+NIL
+HORIZONTAL
 @#$#@#$#@
 ## WHAT IS IT?
 
