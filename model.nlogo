@@ -1,5 +1,6 @@
 globals [
   density ; value in [0,1] , 1 is max-od
+  antibiotica
 ]
 
 breed [bacteria bacterium]
@@ -15,6 +16,7 @@ to setup
     set shape "circle"
     set time 0
     set resistance initial-resistance
+    set antibiotica ab_init
     setxy random-xcor random-ycor
     update-color
   ]
@@ -37,6 +39,7 @@ to go
     ]
   ]
   if count bacteria = 0 [stop]
+  decay
   tick
 end
 
@@ -70,6 +73,10 @@ end
 to expire
   if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
   if random 100 < antibiotica * (100 - resistance) / 100 [die]
+end
+
+to decay
+  set antibiotica max list 0 antibiotica - ab_decay
 end
 
 to-report current-density ; get current density
@@ -208,11 +215,11 @@ Number
 
 SLIDER
 0
-300
+340
 110
-333
-antibiotica
-antibiotica
+373
+ab_init
+ab_init
 0
 100
 2
@@ -318,9 +325,9 @@ HORIZONTAL
 
 SLIDER
 0
-340
+300
 110
-373
+333
 immune-efficiency
 immune-efficiency
 0
@@ -330,6 +337,67 @@ immune-efficiency
 1
 NIL
 HORIZONTAL
+
+SLIDER
+0
+380
+110
+413
+ab_decay
+ab_decay
+0
+100
+50
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+235
+465
+280
+502
+give
+set antibiotica antibiotica + ab_dose
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+235
+520
+340
+563
+ab_dose
+2
+1
+0
+Number
+
+PLOT
+0
+430
+220
+563
+antibiotica
+NIL
+NIL
+0
+10
+0
+10
+true
+false
+"" ""
+PENS
+"Pen 1" 1 0 -7500403 true "plot antibiotica" "plot antibiotica"
 @#$#@#$#@
 ## WHAT IS IT?
 
