@@ -5,23 +5,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pynetlogo
 
-def plot(data, cmd):
-	fig = plt.figure()
-
-	bc = fig.add_subplot(1,2,1)
+def plot(data, cmd, bc, rs):
 	bc.plot(data[cmd[0]], label='Bacteria')
 	bc.set_xlabel('Ticks')
 	bc.set_ylabel('Counts')
 	bc.legend()
 
-	rs = fig.add_subplot(1,2,2)
-	av = [np.mean(x) for x in data[cmd[1]]]
-	rs.plot(av, color='r', label='Average Resistance')
-	bc.set_xlabel('Ticks')
-	bc.set_ylabel('Resistance in %')
+	rs.plot(data[cmd[1]], color='r', label='Average Resistance')
+	rs.set_xlabel('Ticks')
+	rs.set_ylabel('Resistance in %')
 	rs.legend()
-	plt.show()
-
 
 netlogo = pynetlogo.NetLogoLink(
 #	gui=True,
@@ -33,10 +26,16 @@ netlogo.load_model('model.nlogo')
 netlogo.command('setup')
 #netlogo.command('repeat 100 [go]')
 
-cmd = ['count bacteria', '[resistance] of bacteria']
-data = netlogo.repeat_report(cmd, 200, go='go')
-data = pd.DataFrame(data)
+cmd = ['count bacteria', 'mean [resistance] of bacteria']
+
+n = 5
+
+fig, axs = plt.subplots(n, 2)
+data = []
+for i in range(n):
+	rep = netlogo.repeat_report(cmd, 500, go='go')
+	data += [pd.DataFrame(rep)]
+	plot(data[-1], cmd, axs[i, 0], axs[i, 1])
 netlogo.kill_workspace()
-
-plot(data, cmd)
-
+print(data)
+plt.show()
