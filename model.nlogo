@@ -72,11 +72,12 @@ end
 
 to expire
   if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
-  if random 100 < antibiotica * (100 - resistance) / 100 [die]
+  if antibiotica >= mic [if random 100 < lethality * (100 - resistance) [die]]
+
 end
 
 to decay
-  set antibiotica max list 0 antibiotica - ab_decay
+  set antibiotica antibiotica * exp ( - ln 2  / ab_halftime )
 end
 
 to-report current-density ; get current density
@@ -197,7 +198,7 @@ INPUTBOX
 340
 213
 generation-time
-10
+20
 1
 0
 Number
@@ -249,16 +250,16 @@ INPUTBOX
 340
 263
 max-od
-400
+500
 1
 0
 Number
 
 CHOOSER
-230
-390
-340
-435
+670
+445
+780
+490
 color-mode
 color-mode
 "time" "resistance"
@@ -343,8 +344,8 @@ SLIDER
 380
 110
 413
-ab_decay
-ab_decay
+ab_halftime
+ab_halftime
 0
 100
 50
@@ -376,7 +377,7 @@ INPUTBOX
 340
 563
 ab_dose
-2
+10
 1
 0
 Number
@@ -398,6 +399,28 @@ false
 "" ""
 PENS
 "Pen 1" 1 0 -7500403 true "plot antibiotica" "plot antibiotica"
+
+INPUTBOX
+115
+380
+220
+423
+mic
+2
+1
+0
+Number
+
+INPUTBOX
+230
+380
+340
+425
+lethality
+0.1
+1
+0
+Number
 @#$#@#$#@
 ## WHAT IS IT?
 
