@@ -73,7 +73,7 @@ end
 to expire
   if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
   if antibiotica >= mic [if random 100 < lethality * (100 - resistance) [die]]
-
+  ; maybe change resistance to be offset for mic
 end
 
 to decay
@@ -100,6 +100,12 @@ to-report freq_map [ list_ ]
   let uniques remove-duplicates list_
   let counts map [i -> freq i list_ ] uniques
   report (map [ [ x y ] -> list x ( y / len ) ] uniques counts )
+end
+
+to-report avgres
+  ifelse count bacteria = 0
+    [report 0]
+    [report mean [resistance] of bacteria]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -223,7 +229,7 @@ ab_init
 ab_init
 0
 100
-2
+0
 0.1
 1
 NIL
@@ -333,7 +339,7 @@ immune-efficiency
 immune-efficiency
 0
 100
-0.04
+0.01
 0.01
 1
 NIL
