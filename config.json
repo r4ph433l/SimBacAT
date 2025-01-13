@@ -17,7 +17,7 @@
 			"ab-period": 20,
 			"ab-lag": 200
 		      },
-	"value": ["ab-dose", 0.4, 0.6, 3]
+	"value": ["ab-dose", 0.1, 1.0, 10]
 },
 
 "plot": {

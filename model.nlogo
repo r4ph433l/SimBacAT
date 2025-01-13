@@ -407,15 +407,20 @@ Number
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+A Simulation of Bacteria Growth and Antimicrobial Resistance under Influence of Antibiotics.
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+In an optimal Environment Bacteria grows logarithmical due to cell division.
+The Effect of Antibiotics on Bacteria inhibits this growth by killing Bacteria.
+Under pressure to survive Bacteria develop resistances counteracting this effect.
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+The Bacteria Growth is parameterized in the Bacteria Section.
+The Antibiotics...
+The Antimicrobial Resistance mutates through inheritances (increase or decrease).
+The Probability and amount of increase (or decrease) is parameterized in the Resistance Section.
 
 ## THINGS TO NOTICE
 

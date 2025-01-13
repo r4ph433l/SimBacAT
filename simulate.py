@@ -1,6 +1,4 @@
 #!/bin/python
-# sources:
-# https://pynetlogo.readthedocs.io/en/latest/_docs/introduction.html
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
 import numpy as np
@@ -31,7 +29,7 @@ def simulate(netlogo, report, ticks, n, setup={}, value=[], verbose=False):
 		netlogo.command(f'set {prm} {val}')
 
 	vran = range(1)
-	data = np.empty((0, len(report) + 2 if value else 1))
+	data = np.empty((0, len(report) + 2 if value else len(report) + 1))
 	if value:
 		print(f'***********  TEST VALUE   ***********')
 		print(value[0])
@@ -39,15 +37,18 @@ def simulate(netlogo, report, ticks, n, setup={}, value=[], verbose=False):
 		vran = np.linspace(*value[1:])
 
 	for x in vran:
+		vdata = np.empty((0, len(report) + 1))
 		if value:
 			netlogo.command(f'set {value[0]} {x}')
 			print('**************************************')
-			print(f'set {value[0]} {x}')
+			print(f'set {value[0]} {x:.2f}')
 
 		for i in range(n):
 			if verbose:
 				np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
 				print(f'***********   RUN No. {i+1:3}  ***********')
+				if value:
+					print(f'set {value[0]} {x:.2f}')
 				print(f'repeat {ticks} [go]')
 			netlogo.command('setup')
 			rep = netlogo.repeat_report(report, ticks, go='go')
@@ -58,8 +59,7 @@ def simulate(netlogo, report, ticks, n, setup={}, value=[], verbose=False):
 					if np.all(tmp.astype(int) == tmp):
 						print(tmp.astype(int))
 					else: print(tmp)
-			head = [x, i+1] if value else [i+1]
-			data = np.vstack([data, [[*head ,*v] for v in zip(*rep.values())]])
+			vdata = np.concatenate([vdata, [[i+1 ,*v] for v in zip(*rep.values())]])
 
 		if verbose:
 			print('*********** POSTSIMULATION ***********')
@@ -67,16 +67,21 @@ def simulate(netlogo, report, ticks, n, setup={}, value=[], verbose=False):
 		# select most representative data
 		err = np.zeros(n)
 		for i in range(ticks-1):
-			means = [np.mean(data[i::ticks, x+1]) for x in range(len(report))]
-			vars  = [np.var(data[i::ticks, x+1]) for x in range(len(report))]
+			means = [np.mean(vdata[i::ticks, x+1]) for x in range(len(report))]
+			vars  = [np.var(vdata[i::ticks, x+1]) for x in range(len(report))]
 			for k in range(n):
-				err[k] += sum([((data[k*ticks + i][x+1] - means[x]) / vars[x])**2 for x in range(len(report)) if vars[x] != 0])
+				err[k] += sum([((vdata[k*ticks + i][x+1] - means[x]) / vars[x])**2 for x in range(len(report)) if vars[x] != 0])
 			err -= min(err)
 		m = np.argmin(err)
-		data[:,1 if value else 0][data[:,1 if value else 0] == m] = 0
+		vdata[:,0][vdata[:,0] == m] = 0
 		if verbose:
 			print(f'Run No.{m+1} is most representative')
+			print(vdata[vdata[:,0] == 0][:,1:])
 			print('**************************************\n')
+
+		if value:
+			data = np.concatenate([data, np.concatenate([np.full(((ticks+1)*n,1), x), vdata], axis=1)])
+		else: data = vdata
 
 	return data
 
@@ -131,7 +136,7 @@ with open(args.config) as file:
 try:
 	nl = start(args.model, args.gui, args.verbose)
 	data = simulate(nl, **dct['simulate'], verbose=args.verbose)
-	vtest = data.shape[1] > len(dct['simulate']['report'])
+	vtest = data.shape[1] > len(dct['simulate']['report']) + 1
 	if args.outcsv:
 		with open(args.outcsv, 'w') as file:
 			if vtest:
@@ -140,7 +145,7 @@ try:
 			np.savetxt(file, data, delimiter=',')
 	if vtest:
 		for v in np.unique(data[:,0]):
-			plot(data[data[:,0] == v][:,1:], **dct['plot'], suptitle=f'{dct["simulate"]["value"][0]} = {v}', outimg=args.outimg + str(v) if args.outimg else None, verbose=args.verbose)
+			plot(data[data[:,0] == v][:,1:], **dct['plot'], suptitle=f'{dct["simulate"]["value"][0]} = {v:.2f}', outimg=args.outimg + str(v) if args.outimg else None, verbose=args.verbose)
 	else:
 		plot(data, **dct['plot'], outimg=args.outimg, verbose=args.verbose)
 finally:
