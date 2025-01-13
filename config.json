@@ -1,0 +1,29 @@
+{
+"simulate": {
+	"report": ["count bacteria", "avgres", "antibiotica"],
+ 	"ticks": 500,
+ 	"n": 20,
+ 	"parameters": {	"population": 40,
+			"lag-phase": 10,
+			"generation-time": 20,
+			"max-od": 500,
+			"res_init": 0,
+			"mut_period": 20,
+			"res_max": 2,
+			"mut_jump": 0.1,
+			"ab_init": 0,
+			"ab_halftime": 50,
+			"mic": 2,
+			"ab_dose": 1.5,
+			"ab_period": 50,
+			"ab_lag": 50,
+			"ab_lethality": 0.1,
+			"immune-efficiency": 0.01
+		      }
+},
+"plot": {
+	"timeunit": "Minutes",
+	"titles":  ["Bacteria", "Resistance", "Antibiotica"],
+	"ylabels": ["Count", "", ""]
+}
+}
