@@ -1,22 +1,22 @@
 globals [
   density ; value in [0,1] , 1 is max-od
-  antibiotica
+  antibiotic
 ]
 
 breed [bacteria bacterium]
 
 bacteria-own [
-  time ; time till last cell-division
-  resistance
+  time ; time till last cell-division in minutes
+  resistance ; resistance value in [0,1]
 ]
 
 to setup
   clear-all
-  create-bacteria initial-population [
+  create-bacteria start-population [
     set shape "circle"
     set time 0
-    set resistance initial-resistance
-    set antibiotica ab_init
+    set resistance 0
+    set antibiotic 0
     setxy random-xcor random-ycor
     update-color
   ]
@@ -25,21 +25,21 @@ end
 
 to go
   set density current-density
-  ifelse ticks > lag-phase 
+  ifelse ticks >= lag-phase
   [ ; after lag phase
     ask bacteria [
       move
       divide
       expire
-      update-color 
+      update-color
     ]
   ][ ; during lag phase
-    ask bacteria [ 
+    ask bacteria [
       expire
     ]
   ]
-  ; if count bacteria = 0 [stop]
-  decay
+  if count bacteria = 0 [stop]
+  update-ab
   tick
 end
 
@@ -49,57 +49,55 @@ to move
 end
 
 to divide
-  ifelse time >= generation-time 
-  [
+  ifelse time >= generation-time
+  [ ; generation time has passed
     if random-float 1 > density
       [
       set time 0
-		hatch 1 [right random 360 forward 1 set time 0 mutate]
+      hatch 1 [right random 360 forward 1 set time 0 mutate]
       ]
   ]
   [set time time + 1]
 end
 
 to mutate
-  if random mutation-period = 0
+  if random-float 1 < mut-probability ; bacteria only mutates with a probability of mut-probability
   [
-    ifelse random 2 = 0
-    [
-      set resistance min list 100 (resistance + 10)
-    ] [set resistance max list 0 (resistance - 10)]
+    ifelse random 2 = 0 ; increase or decrease resistance
+      [set resistance min list 1 (resistance + mut-jump)]
+      [set resistance max list 0 (resistance - mut-jump)]
   ]
 end
 
 to expire
   if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
-  if antibiotica >= mic [if random 100 < lethality * (100 - resistance) [die]]
-  ; maybe change resistance to be offset for mic
+  if antibiotic > C_0
+  [if random-float 1 < lethality [die]]
 end
 
-to decay
-  set antibiotica antibiotica * exp ( - ln 2  / ab_halftime )
+to-report lethality
+  report 1 - exp(- (ln 2) / (60 / kill-frequency))
+end
+
+to-report kill-frequency
+  report ( (1 - resistance * (9 / 10) ) * ab-efficiency * (1 - exp(-0.5 * (antibiotic - C_0)))) ; 10.7
+end
+
+to update-ab
+  if ticks >= ab-lag and ( ticks - ab-lag ) mod ab-period = 0
+    [ set antibiotic antibiotic + ab-dose ]
+  set antibiotic antibiotic * exp ( - ln 2  / ab-halftime )
 end
 
 to-report current-density ; get current density
-  report count bacteria / max-od
+  report count bacteria / max-population
 end
 
 to update-color ; calculate color based on input mode
   if color-mode = "time"
     [set color (time / generation-time) * 6.0 + 12]
   if color-mode = "resistance"
-    [set color (5 - resistance * 0.05) + 14]
-end
-
-to-report freq [ i_ list_ ]
-  report length filter [ ind -> ind = i_ ] list_
-end
-
-to-report freq_map [ list_ ]
-  let len length list_
-  let uniques remove-duplicates list_
-  let counts map [i -> freq i list_ ] uniques
-  report (map [ [ x y ] -> list x ( y / len ) ] uniques counts )
+    [set color (13 + resistance * 5 )]
 end
 
 to-report avgres
@@ -109,13 +107,13 @@ to-report avgres
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-345
-0
-782
-438
+462
+10
+899
+448
 -1
 -1
-13
+13.0
 1
 10
 1
@@ -133,13 +131,13 @@ GRAPHICS-WINDOW
 0
 1
 ticks
-30
+30.0
 
 BUTTON
-230
-15
-280
+8
+10
 63
+58
 NIL
 setup
 NIL
@@ -153,10 +151,10 @@ NIL
 1
 
 BUTTON
-285
-15
-340
-63
+68
+10
+123
+58
 NIL
 go
 T
@@ -170,263 +168,242 @@ NIL
 0
 
 PLOT
-0
-15
-220
-148
+924
+10
+1144
+143
 bacteria
 NIL
 NIL
-0
-100
-0
-100
+0.0
+100.0
+0.0
+100.0
 true
 false
 "" ""
 PENS
-"Pen 1" 1 0 -16579837 true "plot count bacteria" "plot count bacteria"
+"Pen 1" 1.0 0 -16579837 true "plot count bacteria" "plot count bacteria"
 
 INPUTBOX
-230
-70
-340
+3
+144
 113
-initial-population
-40
+204
+start-population
+40.0
 1
 0
 Number
 
 INPUTBOX
-230
-170
-340
-213
+2
+209
+112
+269
 generation-time
-20
+20.0
 1
 0
 Number
 
 INPUTBOX
-230
-120
-340
-163
+117
+209
+227
+269
 lag-phase
-10
+10.0
 1
 0
 Number
 
-SLIDER
-0
-340
-110
-373
-ab_init
-ab_init
-0
-100
-0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-230
-270
-340
-303
-initial-resistance
-initial-resistance
-0
-100
-0
-1
-1
-NIL
-HORIZONTAL
-
 INPUTBOX
-230
-220
-340
-263
-max-od
-500
+119
+144
+229
+204
+max-population
+500.0
 1
 0
 Number
 
 CHOOSER
-670
-445
-780
-490
+8
+68
+118
+113
 color-mode
 color-mode
 "time" "resistance"
 1
 
 INPUTBOX
-230
-310
-340
-353
-mutation-period
-1
+266
+145
+352
+205
+mut-probability
+0.4
 1
 0
 Number
 
 PLOT
-0
-155
-220
-288
+924
+150
+1144
+283
 resistance
 NIL
 NIL
-0
-101
-0
+0.0
+101.0
+0.0
 0.6
-false
-false
-"" ""
-PENS
-"Pen 1" 1 1 -7500403 true "clear-plot foreach ( freq_map [resistance] of bacteria ) [x -> plotxy first x last x ]" "clear-plot foreach ( freq_map [resistance] of bacteria ) [x -> plotxy first x last x ]"
-
-SLIDER
-115
-300
-225
-333
-min-resistance
-min-resistance
-0
-100
-0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-115
-340
-225
-373
-max-resistance
-max-resistance
-0
-100
-100
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-0
-300
-110
-333
-immune-efficiency
-immune-efficiency
-0
-100
-0.01
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-0
-380
-110
-413
-ab_halftime
-ab_halftime
-0
-100
-50
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-235
-465
-280
-502
-give
-set antibiotica antibiotica + ab_dose
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-INPUTBOX
-235
-520
-340
-563
-ab_dose
-10
-1
-0
-Number
-
-PLOT
-0
-430
-220
-563
-antibiotica
-NIL
-NIL
-0
-10
-0
-10
 true
 false
 "" ""
 PENS
-"Pen 1" 1 0 -7500403 true "plot antibiotica" "plot antibiotica"
+"Pen 1" 1.0 0 -7500403 true "plot avgres" "plot avgres"
 
 INPUTBOX
-115
-380
-220
-423
-mic
-2
+5
+437
+112
+497
+ab-dose
+0.4
 1
 0
 Number
 
+PLOT
+924
+290
+1144
+423
+antibiotic
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"Pen 1" 1.0 0 -7500403 true "plot antibiotic" "plot antibiotic"
+
 INPUTBOX
-230
-380
-340
-425
-lethality
+357
+145
+444
+205
+mut-jump
 0.1
 1
 0
 Number
+
+INPUTBOX
+5
+369
+111
+429
+ab-halftime
+60.0
+1
+0
+Number
+
+INPUTBOX
+119
+436
+229
+496
+ab-period
+20.0
+1
+0
+Number
+
+INPUTBOX
+5
+502
+111
+562
+ab-lag
+200.0
+1
+0
+Number
+
+INPUTBOX
+121
+305
+231
+365
+c_0
+1.2
+1
+0
+Number
+
+TEXTBOX
+7
+117
+157
+142
+Bacteria
+20
+0.0
+1
+
+TEXTBOX
+6
+276
+156
+301
+Antibiotic
+20
+0.0
+1
+
+TEXTBOX
+268
+108
+418
+133
+Resitances
+20
+0.0
+1
+
+INPUTBOX
+265
+214
+444
+274
+immune-efficiency
+0.01
+1
+0
+Number
+
+INPUTBOX
+5
+306
+110
+366
+ab-efficiency
+10.7
+1
+0
+Number
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -776,15 +753,15 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 default
-0
--0.2 0 0 1
-0 1 1 0
-0.2 0 0 1
+0.0
+-0.2 0 0.0 1.0
+0.0 1 1.0 0.0
+0.2 0 0.0 1.0
 link direction
 true
 0
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-
+0
 @#$#@#$#@
