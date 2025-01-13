@@ -2,8 +2,8 @@
 "simulate": {
 	"report": ["count bacteria", "avgres", "antibiotic"],
  	"ticks": 2000,
- 	"n": 20,
- 	"parameters": {	"start-population": 40,
+ 	"n": 10,
+ 	"setup": {	"start-population": 40,
 			"max-population": 500,
 			"lag-phase": 10,
 			"generation-time": 20,
@@ -16,8 +16,10 @@
 			"ab-dose": 0.4,
 			"ab-period": 20,
 			"ab-lag": 200
-		      }
+		      },
+	"value": ["ab-dose", 0.4, 0.6, 3]
 },
+
 "plot": {
 	"timeunit": "Minutes",
 	"titles":  ["Bacteria", "Resistance", "Antibiotica"],

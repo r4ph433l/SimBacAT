@@ -38,7 +38,7 @@ to go
       expire
     ]
   ]
-  if count bacteria = 0 [stop]
+  ;if count bacteria = 0 [stop]
   update-ab
   tick
 end
