@@ -6,27 +6,56 @@ import matplotlib.patheffects as pe
 import numpy as np
 import pynetlogo
 
-def start(model, gui):
+def start(model, gui, verbose=False):
+	if verbose:
+		print('**********    NetLogo©     ***********')
+		print('Starting...')
 	netlogo = pynetlogo.NetLogoLink(
 		gui=gui,
 	#	jvm_path='/usr/lib/jvm/java-23-openjdk/lib/libjli.so',
 		netlogo_home='/opt/netlogo'
 	)
+	if verbose:
+		print(f'Load Model {model}')
 	netlogo.load_model(model)
+	if verbose:
+		print('**************************************')
 	return netlogo
 
-def simulate(netlogo, report, ticks, n, parameters={}):
+def simulate(netlogo, report, ticks, n, parameters={}, verbose=False):
+	if verbose:
+		print('*********** SETUP COMMANDS ***********')
 	for prm, val in parameters.items():
+		if verbose:
+			print(f'set {prm} {val}')
 		netlogo.command(f'set {prm} {val}')
+	if verbose:
+		print('**************************************')
 
 	data = []
 	for i in range(n):
+		if verbose:
+			np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
+			print(f'************  RUN No.{i+1:3}  ************')
 		netlogo.command('setup')
 		rep = netlogo.repeat_report(report, ticks, go='go')
+		if verbose:
+			for r in report:
+				print(f'report {r}')
+				tmp = np.array(rep[r])
+				if np.all(tmp.astype(int) == tmp):
+					print(tmp.astype(int))
+				else: print(tmp)
+			print('**************************************')
 		data += [[i+1,*v] for v in zip(*rep.values())]
+
 
 	data = np.array(data)
 
+
+	if verbose:
+		print('*********** POSTSIMULATION ***********')
+		print('Determine most representative Data...')
 	# select most representative data
 	err = np.zeros(n)
 	for i in range(ticks-1):
@@ -36,12 +65,14 @@ def simulate(netlogo, report, ticks, n, parameters={}):
 			err[k] += sum([((data[k*ticks + i][x+1] - means[x]) / vars[x])**2 for x in range(len(report)) if vars[x] != 0])
 		err -= min(err)
 	m = np.argmin(err)
-	print(m)
 	data[:,0][data[:,0] == m] = 0
+	if verbose:
+		print(f'Run No.{m+1} is most representative')
+		print('**************************************')
 
 	return data
 
-def plot(data, timeunit, ylabels, titles, outimg=None):
+def plot(data, timeunit, ylabels, titles, outimg=None, verbose=False):
 	runs = data.shape[1] - 1
 	n = np.unique(data[:,0])
 	n[::-1].sort()
@@ -49,8 +80,8 @@ def plot(data, timeunit, ylabels, titles, outimg=None):
 	for k in range(runs):
 		for i in n:
 			if i == 0:
-				axs[k].plot(data[data[:,0] == i][:,k+1], color='black', alpha=1)
-			axs[k].plot(data[data[:,0] == i][:,k+1], linestyle='-.', alpha=0.25)
+				axs[k].plot(data[data[:,0] == i][:,k+1], color='black', alpha=1, markevery=20)
+			axs[k].plot(data[data[:,0] == i][:,k+1], alpha=0.25, markevery=5)
 		axs[k].set_xlabel(timeunit)
 		axs[k].set_title(titles[k])
 		axs[k].set_ylabel(ylabels[k])
@@ -78,13 +109,12 @@ with open(args.config) as file:
 	dct = json.load(file)
 
 try:
-	nl = start(args.model, args.gui)
-	data = simulate(nl, **dct['simulate'])
-	if args.verbose: print(data)
+	nl = start(args.model, args.gui, args.verbose)
+	data = simulate(nl, **dct['simulate'], verbose=args.verbose)
 	if args.outcsv:
 		with open(args.outcsv, 'w') as file:
 			file.write('Run No. [0 = most representative],' + ','.join([f'{x} in {y}' for x,y in zip(dct['plot']['titles'], dct['plot']['ylabels'])]) + '\n')
 			np.savetxt(file, data, delimiter=',')
-	plot(data, **dct['plot'], outimg=args.outimg)
+	plot(data, **dct['plot'], outimg=args.outimg, verbose=args.verbose)
 finally:
 	if nl: nl.kill_workspace()

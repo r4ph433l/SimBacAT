@@ -1,24 +1,21 @@
 {
 "simulate": {
-	"report": ["count bacteria", "avgres", "antibiotica"],
- 	"ticks": 500,
+	"report": ["count bacteria", "avgres", "antibiotic"],
+ 	"ticks": 2000,
  	"n": 20,
- 	"parameters": {	"population": 40,
+ 	"parameters": {	"start-population": 40,
+			"max-population": 500,
 			"lag-phase": 10,
 			"generation-time": 20,
-			"max-od": 500,
-			"res_init": 0,
-			"mut_period": 20,
-			"res_max": 2,
-			"mut_jump": 0.1,
-			"ab_init": 0,
-			"ab_halftime": 50,
-			"mic": 2,
-			"ab_dose": 1.5,
-			"ab_period": 50,
-			"ab_lag": 50,
-			"ab_lethality": 0.1,
-			"immune-efficiency": 0.01
+			"mut-probability": 0.4,
+			"mut-jump": 0.1,
+			"immune-efficiency": 0.01,
+			"ab-efficiency": 10.7,
+			"c_0": 1.2,
+			"ab-halftime": 60,
+			"ab-dose": 0.4,
+			"ab-period": 20,
+			"ab-lag": 200
 		      }
 },
 "plot": {
