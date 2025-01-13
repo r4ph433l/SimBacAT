@@ -2,6 +2,7 @@
 # sources:
 # https://pynetlogo.readthedocs.io/en/latest/_docs/introduction.html
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 import numpy as np
 import pynetlogo
 
@@ -22,19 +23,42 @@ def simulate(netlogo, report, ticks, n, parameters={}):
 	for i in range(n):
 		netlogo.command('setup')
 		rep = netlogo.repeat_report(report, ticks, go='go')
-		data += [[i,*v] for v in zip(*rep.values())]
+		data += [[i+1,*v] for v in zip(*rep.values())]
 
-	return np.array(data)
+	data = np.array(data)
 
-def plot(data, ylabels):
+	# select most representative data
+	err = np.zeros(n)
+	for i in range(ticks-1):
+		means = [np.mean(data[i::ticks, x+1]) for x in range(len(report))]
+		vars  = [np.var(data[i::ticks, x+1]) for x in range(len(report))]
+		for k in range(n):
+			err[k] += sum([((data[k*ticks + i][x+1] - means[x]) / vars[x])**2 for x in range(len(report)) if vars[x] != 0])
+		err -= min(err)
+	m = np.argmin(err)
+	print(m)
+	data[:,0][data[:,0] == m] = 0
+
+	return data
+
+def plot(data, timeunit, ylabels, titles, outimg=None):
+	runs = data.shape[1] - 1
 	n = np.unique(data[:,0])
-	fig, axs = plt.subplots(1,data.shape[1]-1)
-	for k in range(data.shape[1]-1):
+	n[::-1].sort()
+	fig, axs = plt.subplots(1,runs)
+	for k in range(runs):
 		for i in n:
-			axs[k].plot(data[data[:,0] == i][:,k+1])
-		axs[k].set_xlabel('Ticks')
+			if i == 0:
+				axs[k].plot(data[data[:,0] == i][:,k+1], color='black', alpha=1)
+			axs[k].plot(data[data[:,0] == i][:,k+1], linestyle='-.', alpha=0.25)
+		axs[k].set_xlabel(timeunit)
+		axs[k].set_title(titles[k])
 		axs[k].set_ylabel(ylabels[k])
-	plt.show()
+	fig.set_size_inches(runs * 5, 5)
+	if outimg:
+		fig.savefig(outimg)
+	else:
+		plt.show()
 
 
 import argparse
@@ -44,7 +68,8 @@ import sys, signal
 parser = argparse.ArgumentParser(prog='simulate')
 parser.add_argument('model')
 parser.add_argument('config')
-parser.add_argument('-o', '--outfile')
+parser.add_argument('-o', '--outcsv')
+parser.add_argument('-i', '--outimg')
 parser.add_argument('-g', '--gui', action='store_true')
 parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
@@ -55,16 +80,11 @@ with open(args.config) as file:
 try:
 	nl = start(args.model, args.gui)
 	data = simulate(nl, **dct['simulate'])
-	if args.verbose: print(d)
-	if args.outfile: np.savetxt(args.outfile, data, delimiter=',')
-	plot(data, **dct['plot'])
+	if args.verbose: print(data)
+	if args.outcsv:
+		with open(args.outcsv, 'w') as file:
+			file.write('Run No. [0 = most representative],' + ','.join([f'{x} in {y}' for x,y in zip(dct['plot']['titles'], dct['plot']['ylabels'])]) + '\n')
+			np.savetxt(file, data, delimiter=',')
+	plot(data, **dct['plot'], outimg=args.outimg)
 finally:
 	if nl: nl.kill_workspace()
-
-"""
-nl = start()
-data = simulate(nl, ['count bacteria', 'avgres', 'antibiotica'], 200, 5, [('ab_init', 2.5)])
-print(data)
-kill(nl)
-plot(data, ['Count', 'Resistance in %', ''])
-"""
