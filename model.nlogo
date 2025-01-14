@@ -102,7 +102,7 @@ end
 
 to-report avgres
   ifelse count bacteria = 0
-    [report 0]
+    [report -1]
     [report mean [resistance] of bacteria]
 end
 

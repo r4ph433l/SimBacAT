@@ -88,10 +88,11 @@ def plot(data, plots=None, img=None, verbose=False):
 		for i in range(len(plots)):
 			ax = plt.subplot(1, len(plots), i+1)
 			for r in runs:
-				ax.plot(data[data[:,0] == r][:,plots[i]+1], alpha=0.25)
+				vdata = data[data[:,0] == r][:,plots[i]+1]
+				ax.plot(vdata[vdata >= 0], alpha=0.25)
 			vdata = np.array([data[data[:,0] == r][:,plots[i]+1] for r in runs])
 			print(vdata)
-			ax.plot([np.mean(row) for row in vdata.T], color='black', label='average')
+			ax.plot([np.mean(row[row >= 0]) for row in vdata.T], color='black', label='average')
 			ax.set_title(titles[plots[i]])
 			ax.set_xlabel(timeunit)
 			ax.set_ylabel(units[plots[i]])
@@ -105,7 +106,7 @@ def plot(data, plots=None, img=None, verbose=False):
 			ax = plt.subplot(1, len(plots), i+1)
 			for v in values:
 				vdata = np.array([data[np.logical_and(data[:,0] == v, data[:,1] == r)][:,plots[i]+2] for r in runs[v]])
-				ax.plot([np.mean(row) for row in vdata.T], label=f'{round(v, 3)}')
+				ax.plot([np.mean(row[row >= 0]) for row in vdata.T], label=f'{round(v, 3)}')
 			ax.set_title(titles[plots[i]])
 			ax.set_xlabel(timeunit)
 			ax.set_ylabel(units[plots[i]])
@@ -152,7 +153,7 @@ if args.mode == 'simulate':
 		with open(args.data, 'w') as file:
 			if data.shape[1] > len(reports) + 1:
 				file.write(dct['value'][0] + ',')
-			file.write('Run No. [0 = most representative],' + ','.join([f'{x} in {y}' for x,y in zip(titles, units)]) + '\n')
+			file.write('Run No.,' + ','.join([f'{x} in {y}' for x,y in zip(titles, units)]) + '\n')
 			np.savetxt(file, data, delimiter=',')
 	finally:
 		if nl: nl.kill_workspace()
