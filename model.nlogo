@@ -15,7 +15,7 @@ to setup
   create-bacteria start-population [
     set shape "circle"
     set time 0
-    set resistance 0
+    set resistance normrandom-resistance
     set antibiotic 0
     setxy random-xcor random-ycor
     update-color
@@ -95,7 +95,7 @@ end
 
 to update-color ; calculate color based on input mode
   if color-mode = "time"
-    [set color (time / generation-time) * 6.0 + 12]
+    [set color (6 - (time / generation-time) * 6.0) + 12]
   if color-mode = "resistance"
     [set color (13 + resistance * 5 )]
 end
@@ -104,6 +104,10 @@ to-report avgres
   ifelse count bacteria = 0
     [report 0]
     [report mean [resistance] of bacteria]
+end
+
+to-report normrandom-resistance
+  report round (sum n-values 11 [random (1 / mut-jump)] / 10 ) * mut-jump
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
