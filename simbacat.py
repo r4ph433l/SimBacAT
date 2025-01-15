@@ -4,7 +4,7 @@ import matplotlib.patheffects as pe
 import numpy as np
 import pynetlogo
 import matplotlib
-matplotlib.rc('font', size='12')
+#matplotlib.rc('font', size='12')
 
 reports  = ["count bacteria", "avg-tolerance", "antibiotic"] 	# netlogo commands for bacteria count, average tolerance and antibiotics concentration
 timeunit =  r"Zeit [$min$]"					# unit for netlogo ticks
@@ -109,8 +109,8 @@ def plot(data, plots=None, img=None, verbose=False):
 			vdata = np.array([data[data[:,0] == r][:,plots[i]+1] for r in runs])
 			ax.plot([np.mean(row[row > -1]) for row in vdata.T], color='black', label='Durchschnitt')
 			ax.set_title(titles[plots[i]])
-			ax.set_xlabel(timeunit)
-			ax.set_ylabel(units[plots[i]])
+			ax.set_xlabel(timeunit, size='large')
+			ax.set_ylabel(units[plots[i]], size='large')
 			ax.legend()
 	# if global values were tested plot only average
 	else:
@@ -126,8 +126,8 @@ def plot(data, plots=None, img=None, verbose=False):
 				vdata = np.array([data[np.logical_and(data[:,0] == v, data[:,1] == r)][:,plots[i]+2] for r in runs[v]])
 				ax.plot([np.mean(row[row > -1]) for row in vdata.T],label=f'{round(v, 3)}')
 			ax.set_title(titles[plots[i]])
-			ax.set_xlabel(timeunit)
-			ax.set_ylabel(units[plots[i]])
+			ax.set_xlabel(timeunit, size='large')
+			ax.set_ylabel(units[plots[i]], size='large')
 			ax.legend()
 
 	plt.gcf().set_size_inches(5*len(plots) +2, 5)
@@ -137,6 +137,7 @@ def plot(data, plots=None, img=None, verbose=False):
 			print(f'Save Image to {img}')
 		plt.savefig(img)
 	else:
+		plt.margins(0)
 		plt.show()
 	if verbose:
 		print('**************************************')
