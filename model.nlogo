@@ -7,7 +7,7 @@ breed [bacteria bacterium]
 
 bacteria-own [
   time ; time till last cell-division in minutes
-  resistance ; resistance value in [0,1]
+  tolerance ; tolerance value in [0,1]
 ]
 
 to setup
@@ -15,7 +15,7 @@ to setup
   create-bacteria start-population [
     set shape "circle"
     set time 0
-    set resistance normrandom-resistance
+    set tolerance random-tolerance ; start with a random distribution of tolerances
     set antibiotic 0
     setxy random-xcor random-ycor
     update-color
@@ -63,9 +63,9 @@ end
 to mutate
   if random-float 1 < mut-probability ; bacteria only mutates with a probability of mut-probability
   [
-    ifelse random 2 = 0 ; increase or decrease resistance
-      [set resistance min list 1 (resistance + mut-jump)]
-      [set resistance max list 0 (resistance - mut-jump)]
+    ifelse random 2 = 0 ; increase or decrease tolerance
+      [set tolerance min list 1 (tolerance + mut-jump)]
+      [set tolerance max list -1 (tolerance - mut-jump)]
   ]
 end
 
@@ -80,7 +80,9 @@ to-report lethality
 end
 
 to-report kill-frequency
-  report ( (1 - resistance * (9 / 10) ) * ab-efficiency * (1 - exp(-0.5 * (antibiotic - C_0)))) ; 10.7
+  let reduce-ab-efficiency (1 - tolerance * (9 / 10) ) ; factor by which the kill-rate of the antibiotic is reduced, ranges from 1 to 1/10
+  if tolerance <= 0 [set reduce-ab-efficiency 1]
+  report ( reduce-ab-efficiency * ab-efficiency * (1 - exp(-0.5 * (antibiotic - C_0)))) ; 10.7
 end
 
 to update-ab
@@ -96,18 +98,26 @@ end
 to update-color ; calculate color based on input mode
   if color-mode = "time"
     [set color (6 - (time / generation-time) * 6.0) + 12]
-  if color-mode = "resistance"
-    [set color (13 + resistance * 5 )]
+  if color-mode = "tolerance"
+    [set color (15 + tolerance * 2 )]
 end
 
-to-report avgres
+to-report avg-tolerance
   ifelse count bacteria = 0
     [report -1]
-    [report mean [resistance] of bacteria]
+    [report mean [tolerance] of bacteria]
 end
 
-to-report normrandom-resistance
-  report round (sum n-values 11 [random (1 / mut-jump)] / 10 ) * mut-jump
+to-report dev-tolerance
+  ifelse count bacteria <= 1
+    [report -1]
+    [report standard-deviation [tolerance] of bacteria]
+end
+
+to-report random-tolerance
+  ifelse random 2 = 0
+      [report  random-float mut-jump]
+      [report  0 - random-float mut-jump]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -117,7 +127,7 @@ GRAPHICS-WINDOW
 448
 -1
 -1
-13.0
+13
 1
 10
 1
@@ -135,7 +145,7 @@ GRAPHICS-WINDOW
 0
 1
 ticks
-30.0
+30
 
 BUTTON
 8
@@ -179,15 +189,15 @@ PLOT
 bacteria
 NIL
 NIL
-0.0
-100.0
-0.0
-100.0
+0
+100
+0
+100
 true
 false
 "" ""
 PENS
-"Pen 1" 1.0 0 -16579837 true "plot count bacteria" "plot count bacteria"
+"Pen 1" 1 0 -16579837 true "plot count bacteria" "plot count bacteria"
 
 INPUTBOX
 3
@@ -195,7 +205,7 @@ INPUTBOX
 113
 204
 start-population
-40.0
+40
 1
 0
 Number
@@ -206,7 +216,7 @@ INPUTBOX
 112
 269
 generation-time
-20.0
+20
 1
 0
 Number
@@ -217,7 +227,7 @@ INPUTBOX
 227
 269
 lag-phase
-10.0
+10
 1
 0
 Number
@@ -228,7 +238,7 @@ INPUTBOX
 229
 204
 max-population
-500.0
+500
 1
 0
 Number
@@ -240,8 +250,8 @@ CHOOSER
 113
 color-mode
 color-mode
-"time" "resistance"
-1
+"time" "tolerance"
+0
 
 INPUTBOX
 266
@@ -249,7 +259,7 @@ INPUTBOX
 352
 205
 mut-probability
-0.4
+0.1
 1
 0
 Number
@@ -259,18 +269,19 @@ PLOT
 150
 1144
 283
-resistance
+tolerance
 NIL
 NIL
-0.0
-101.0
-0.0
+0
+101
+0
 0.6
 true
-false
+true
 "" ""
 PENS
-"Pen 1" 1.0 0 -7500403 true "plot avgres" "plot avgres"
+"mean" 1 0 -7500403 true "plot avg-tolerance" "plot avg-tolerance"
+"deviation" 1 0 -2674135 true "plot dev-tolerance" "plot dev-tolerance"
 
 INPUTBOX
 5
@@ -278,7 +289,7 @@ INPUTBOX
 112
 497
 ab-dose
-0.4
+2
 1
 0
 Number
@@ -291,15 +302,15 @@ PLOT
 antibiotic
 NIL
 NIL
-0.0
-10.0
-0.0
-10.0
+0
+10
+0
+10
 true
 false
 "" ""
 PENS
-"Pen 1" 1.0 0 -7500403 true "plot antibiotic" "plot antibiotic"
+"Pen 1" 1 0 -7500403 true "plot antibiotic" "plot antibiotic"
 
 INPUTBOX
 357
@@ -318,7 +329,7 @@ INPUTBOX
 111
 429
 ab-halftime
-60.0
+60
 1
 0
 Number
@@ -329,7 +340,7 @@ INPUTBOX
 229
 496
 ab-period
-20.0
+240
 1
 0
 Number
@@ -340,7 +351,7 @@ INPUTBOX
 111
 562
 ab-lag
-200.0
+300
 1
 0
 Number
@@ -363,7 +374,7 @@ TEXTBOX
 142
 Bacteria
 20
-0.0
+0
 1
 
 TEXTBOX
@@ -373,7 +384,7 @@ TEXTBOX
 301
 Antibiotic
 20
-0.0
+0
 1
 
 TEXTBOX
@@ -381,9 +392,9 @@ TEXTBOX
 108
 418
 133
-Resitances
+Tolerances
 20
-0.0
+0
 1
 
 INPUTBOX
@@ -392,7 +403,7 @@ INPUTBOX
 444
 274
 immune-efficiency
-0.01
+0.02
 1
 0
 Number
@@ -407,7 +418,6 @@ ab-efficiency
 1
 0
 Number
-
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -415,41 +425,20 @@ A Simulation of Bacteria Growth and Antimicrobial Resistance under Influence of 
 
 ## HOW IT WORKS
 
-In an optimal Environment Bacteria grows exponential due to cell division.
+In an optimal Environment Bacteria grows logarithmical due to cell division.
 The Effect of Antibiotics on Bacteria inhibits this growth by killing Bacteria.
 Under pressure to survive Bacteria develop resistances counteracting this effect.
 
 ## HOW TO USE IT
 
 The Bacteria Growth is parameterized in the Bacteria Section.
-The `start-population` and `max-population` are refering to the amount of cells in 10<sup>-6</sup> ml.
-
 The Antibiotics...
-
 The Antimicrobial Resistance mutates through inheritances (increase or decrease).
 The Probability and amount of increase (or decrease) is parameterized in the Resistance Section.
-The `immune-efficiency` is not affected by resistance and introduces another kill rate for the Bacteria.
-
-One Tick represents one Minute.
 
 ## THINGS TO NOTICE
-**For E Coli K-12**
 
-* `set max-population 500`
-* `set generation-time 20`
-
-**For Ampicillin**
-
-* `set ab-efficiency 10.7`
-* `set C_0 1.2`
-* `set ab-halftime 60`
-
-**Recommendation**
-
-* `set start-population 40`
-* `set immune-efficiency 0.017`
-* `lag-phase < ab-lag`
-
+(suggested things for the user to notice while running the model)
 
 ## THINGS TO TRY
 
@@ -783,15 +772,15 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 default
-0.0
--0.2 0 0.0 1.0
-0.0 1 1.0 0.0
-0.2 0 0.0 1.0
+0
+-0.2 0 0 1
+0 1 1 0
+0.2 0 0 1
 link direction
 true
 0
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-0
+
 @#$#@#$#@
