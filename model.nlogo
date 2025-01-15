@@ -415,20 +415,41 @@ A Simulation of Bacteria Growth and Antimicrobial Resistance under Influence of 
 
 ## HOW IT WORKS
 
-In an optimal Environment Bacteria grows logarithmical due to cell division.
+In an optimal Environment Bacteria grows exponential due to cell division.
 The Effect of Antibiotics on Bacteria inhibits this growth by killing Bacteria.
 Under pressure to survive Bacteria develop resistances counteracting this effect.
 
 ## HOW TO USE IT
 
 The Bacteria Growth is parameterized in the Bacteria Section.
+The `start-population` and `max-population` are refering to the amount of cells in 10<sup>-6</sup> ml.
+
 The Antibiotics...
+
 The Antimicrobial Resistance mutates through inheritances (increase or decrease).
 The Probability and amount of increase (or decrease) is parameterized in the Resistance Section.
+The `immune-efficiency` is not affected by resistance and introduces another kill rate for the Bacteria.
+
+One Tick represents one Minute.
 
 ## THINGS TO NOTICE
+**For E Coli K-12**
 
-(suggested things for the user to notice while running the model)
+* `set max-population 500`
+* `set generation-time 20`
+
+**For Ampicillin**
+
+* `set ab-efficiency 10.7`
+* `set C_0 1.2`
+* `set ab-halftime 60`
+
+**Recommendation**
+
+* `set start-population 40`
+* `set immune-efficiency 0.017`
+* `lag-phase < ab-lag`
+
 
 ## THINGS TO TRY
 
