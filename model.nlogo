@@ -421,43 +421,75 @@ Number
 @#$#@#$#@
 ## WHAT IS IT?
 
-A Simulation of Bacteria Growth and Antimicrobial Resistance under Influence of Antibiotics.
+A Simulation of Bacteria Growth and Antimicrobial Tolerance under Influence of Antibiotics.
 
 ## HOW IT WORKS
 
-In an optimal Environment Bacteria grows logarithmical due to cell division.
+In an optimal Environment Bacteria grows exponential due to cell division.
 The Effect of Antibiotics on Bacteria inhibits this growth by killing Bacteria.
-Under pressure to survive Bacteria develop resistances counteracting this effect.
+Under pressure to survive Bacteria develop tolerances counteracting this effect.
 
 ## HOW TO USE IT
-
 The Bacteria Growth is parameterized in the Bacteria Section.
-The Antibiotics...
-The Antimicrobial Resistance mutates through inheritances (increase or decrease).
+
+Bacteria Characteristics:
+
+* `max-population` maximum of cells in 1 nl
+* `generation-time`
+* `lag-phase`
+
+Variable Parameters:
+
+* `start-population`
+
+The Antibiotic is parameterized in the Antibiotics Section.
+
+Antibiotic Characteristics:
+
+* `ab-efficiency`
+* `C_0`
+* `ab-halftime`
+
+Variable Parameters
+
+* `ab-dose` = Antibioticdose in µg/ml
+* `ab-period`
+* `ab-lag`
+
+The Antimicrobial Tolerance mutates through inheritances (increase or decrease).
 The Probability and amount of increase (or decrease) is parameterized in the Resistance Section.
 
+* `mut-probability`
+* `mut-jump` = amount of increase (or decrease)
+
+To simulate the immune system Bacteria die with a certain probability not impacted by tolerance.
+
+* `immune-efficiceny`
 ## THINGS TO NOTICE
+E Coli K12
 
-(suggested things for the user to notice while running the model)
+* `set max-population 500`
+* `set generation-time 20`
+* `set lag-phase 60`
 
+Ampicillin
+
+* `set ab-dose 10.7`
+* `set C_0 1.2` is the minimal concentration for the antibiotic to take effect
+* `set ab-halftime 60`
+
+Suggestion
+
+* `set start-population 40`
+* `set immune-efficiency 0.02`
+* `set mut-probability 0.1`
+* `set mut-jump 0.1`
+* `set ab-lag 300`
 ## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
+Try variating `ab-dose` and `ab-period`.
 ## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
+This model only simulates tolerances which correspond to a decrease in efficiency of the antibiotic.
+A resistance could be implemented as a offset for the `C_0` parameter.
 (a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
 @#$#@#$#@
 default
