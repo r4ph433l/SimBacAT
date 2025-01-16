@@ -25,7 +25,9 @@ Zum Test können diese Befehle mit der angehangenen Konfigurationsdatei ausgefü
 python simbacat.py s data -v
 python simbacat.py p data
 ``` 
-Dabei sollte ein Plot ähnlich zu diesem entstehen: ![test run](example.png "Plot Test Data")
+Dabei sollte ein Plot ähnlich zu diesem entstehen:
+
+![test run](example.png "Plot Test Data")
 Weiterer SchnickSchnack kann der Dokumentation entnommen werden, welche mit `python simbacat.py -h` angezeigt werden kann.
 
 ## WHAT IT NEEDS
