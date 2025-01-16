@@ -1,5 +1,5 @@
 {
-"ticks": 5000, "n": 10,
+"ticks": 2000, "n": 10,
 "setup": {	"start-population": 40,
 		"max-population": 500,
 		"lag-phase": 10,
@@ -10,9 +10,9 @@
 		"ab-efficiency": 10.7,
 		"c_0": 1.2,
 		"ab-halftime": 60,
-		"ab-dose": 1.5,
-		"ab-period": 120,
-		"ab-lag": 200
+		"ab-dose": 0.35,
+		"ab-period": 20,
+		"ab-lag": 300
 	 },
-"value": ["ab-dose", 1.0, 1.2, 1.4]
+"value": null
 }
