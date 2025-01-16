@@ -29,9 +29,9 @@ Weiterer SchnickSchnack kann der Dokumentation entnommen werden, welche mit `pyt
 
 ## WHAT IT NEEDS
 * python3
-* * matplotlib
-* * numpy
-* * pynetlogo
+  * matplotlib
+  * numpy
+  * pynetlogo
 * NetLogo
 
 ## WINDOWS...
