@@ -10,8 +10,8 @@
 		"ab-efficiency": 10.7,
 		"c_0": 1.2,
 		"ab-halftime": 60,
-		"ab-dose": 0.35,
-		"ab-period": 20,
+		"ab-dose": 0.5,
+		"ab-period": 30,
 		"ab-lag": 300
 	 },
 "value": null
