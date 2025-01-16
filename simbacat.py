@@ -4,12 +4,12 @@ import matplotlib.patheffects as pe
 import numpy as np
 import pynetlogo
 import matplotlib
-#matplotlib.rc('font', size='12')
 
 reports  = ["count bacteria", "avg-tolerance", "antibiotic"] 	# netlogo commands for bacteria count, average tolerance and antibiotics concentration
 timeunit =  r"Zeit [$min$]"					# unit for netlogo ticks
 titles   = ["", "", ""]						# plot titles
 units    = ["Anzahl Bakterien", "Toleranz", r"Konzentration Ampicillin [$µg/ml$]"] # units for bacteria count, tolerance & and antibiotics concentration
+threshholds = [[],[],[(1.2, r'$C_0$'), (1.7, r'$MHK$')]]
 
 # start netlogo environment
 def start(model, gui, verbose=False):
@@ -111,7 +111,12 @@ def plot(data, plots=None, img=None, verbose=False):
 			ax.set_title(titles[plots[i]])
 			ax.set_xlabel(timeunit, size='large')
 			ax.set_ylabel(units[plots[i]], size='large')
+			ax.margins(0)
 			ax.legend()
+
+			for t, l in threshholds[plots[i]]:
+				ax.plot(ax.get_xlim(), [t]*2, linestyle='dotted', color='black')
+			ax.set_yticks([t[0] for t in threshholds[plots[i]]], labels=[t[1] for t in threshholds[plots[i]]], minor=True, color='red')
 	# if global values were tested plot only average
 	else:
 		values = np.unique(data[:,0])
@@ -128,16 +133,20 @@ def plot(data, plots=None, img=None, verbose=False):
 			ax.set_title(titles[plots[i]])
 			ax.set_xlabel(timeunit, size='large')
 			ax.set_ylabel(units[plots[i]], size='large')
+			ax.margins(0)
 			ax.legend()
+			for t, l in threshholds[plots[i]]:
+				ax.plot(ax.get_xlim(), [t]*2, linestyle='dotted', color='black')
+			ax.set_yticks([t[0] for t in threshholds[plots[i]]], labels=[t[1] for t in threshholds[plots[i]]], minor=True, color='red')
 
 	plt.gcf().set_size_inches(5*len(plots) +2, 5)
+	plt.tight_layout()
 	# save to 'img' if set
 	if img:
 		if verbose:
 			print(f'Save Image to {img}')
 		plt.savefig(img)
 	else:
-		plt.margins(0)
 		plt.show()
 	if verbose:
 		print('**************************************')
@@ -151,12 +160,12 @@ parser = argparse.ArgumentParser(prog='SimBacAT',
 				description='Simulation of Bacteria, Antibiotics & Antimicrobial Tolerance',
 				epilog='made by Raphael Schoenefeld & Sebastian Droege')
 parser.add_argument('mode', choices=['s', 'p'], help='[s] to simulate data, [p] to plot data')
-parser.add_argument('data', help='path for .csv data output')
+parser.add_argument('data', help='path for .csv data')
 parser.add_argument('-m', '--model', default='model.nlogo', help='path to .nlogo file | default [model.nlogo]')
 parser.add_argument('-c', '--config', default='config.json', help='path to .json config file | default [config.json]')
-parser.add_argument('-p', '--plots', nargs='+', default=None, help='No. of plots to show | [1] Bacteria, [2] Tolerance, [3] Antibiotics')
+parser.add_argument('--plots', nargs='+', default=None, help='No. of plots to show | [1] Bacteria, [2] Tolerance, [3] Antibiotics')
 parser.add_argument('--value', default=None, help='plot only this value')
-parser.add_argument('-i', '--image', help='path for .png image output of plot')
+parser.add_argument('--image', help='path for .png image output of plot')
 parser.add_argument('-g', '--gui', action='store_true', help='open gui of netlogo')
 parser.add_argument('-v', '--verbose', action='store_true', help='display status information')
 args = parser.parse_args()
