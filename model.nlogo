@@ -15,11 +15,11 @@ to setup
   create-bacteria start-population [
     set shape "circle"
     set time 0
-    set tolerance random-tolerance ; start with a random distribution of tolerances
-    set antibiotic 0
+    set tolerance 0
     setxy random-xcor random-ycor
     update-color
   ]
+  set antibiotic 0
   reset-ticks
 end
 
@@ -69,10 +69,23 @@ to mutate
   ]
 end
 
+to update-ab
+  if ticks >= ab-lag and ( ticks - ab-lag ) mod ab-period = 0
+    [ set antibiotic antibiotic + ab-dose ]
+  set antibiotic antibiotic * exp ( - ln 2  / ab-halftime )
+end
+
 to expire
   if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
   if antibiotic > C_0
   [if random-float 1 < lethality [die]]
+end
+
+to update-color ; calculate color based on input mode
+  if color-mode = "time"
+    [set color (6 - (time / generation-time) * 6.0) + 12]
+  if color-mode = "tolerance"
+  [set color (19 - (max list 0 tolerance * 4))]
 end
 
 to-report lethality
@@ -85,21 +98,8 @@ to-report kill-frequency
   report ( reduce-ab-efficiency * ab-efficiency * (1 - exp(-0.5 * (antibiotic - C_0)))) ; 10.7
 end
 
-to update-ab
-  if ticks >= ab-lag and ( ticks - ab-lag ) mod ab-period = 0
-    [ set antibiotic antibiotic + ab-dose ]
-  set antibiotic antibiotic * exp ( - ln 2  / ab-halftime )
-end
-
 to-report current-density ; get current density
   report count bacteria / max-population
-end
-
-to update-color ; calculate color based on input mode
-  if color-mode = "time"
-    [set color (6 - (time / generation-time) * 6.0) + 12]
-  if color-mode = "tolerance"
-    [set color (15 + tolerance * 2 )]
 end
 
 to-report avg-tolerance
@@ -227,7 +227,7 @@ INPUTBOX
 227
 269
 lag-phase
-10
+60
 1
 0
 Number
@@ -251,7 +251,7 @@ CHOOSER
 color-mode
 color-mode
 "time" "tolerance"
-0
+1
 
 INPUTBOX
 266
@@ -277,11 +277,10 @@ NIL
 0
 0.6
 true
-true
+false
 "" ""
 PENS
-"mean" 1 0 -7500403 true "plot avg-tolerance" "plot avg-tolerance"
-"deviation" 1 0 -2674135 true "plot dev-tolerance" "plot dev-tolerance"
+"mean" 1 0 -16514816 true "plot avg-tolerance" "plot avg-tolerance"
 
 INPUTBOX
 5
@@ -289,7 +288,7 @@ INPUTBOX
 112
 497
 ab-dose
-2
+0.4
 1
 0
 Number
@@ -310,7 +309,7 @@ true
 false
 "" ""
 PENS
-"Pen 1" 1 0 -7500403 true "plot antibiotic" "plot antibiotic"
+"Pen 1" 1 0 -16514816 true "plot antibiotic" "plot antibiotic"
 
 INPUTBOX
 357
@@ -340,7 +339,7 @@ INPUTBOX
 229
 496
 ab-period
-240
+20
 1
 0
 Number
@@ -403,7 +402,7 @@ INPUTBOX
 444
 274
 immune-efficiency
-0.02
+0.015
 1
 0
 Number
