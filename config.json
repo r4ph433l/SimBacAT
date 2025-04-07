@@ -1,0 +1,18 @@
+{
+"ticks": 2000, "n": 10,
+"setup": {	"start-population": 40,
+		"max-population": 500,
+		"lag-phase": 0,
+		"generation-time": 60,
+		"mut-probability": 0.1,
+		"mut-jump": 0.5,
+		"immune-efficiency": 0.007,
+		"ab-efficiency": 10.7,
+		"c_0": 1.2,
+		"ab-halftime": 60,
+		"ab-dose": 0.0,
+		"ab-period": 20,
+		"ab-lag": 300
+	 },
+"value": null
+}

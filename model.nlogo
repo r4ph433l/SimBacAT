@@ -1,42 +1,45 @@
 globals [
   density ; value in [0,1] , 1 is max-od
+  antibiotic
 ]
 
 breed [bacteria bacterium]
 
 bacteria-own [
-  time ; time till last cell-division
-  resistance
+  time ; time till last cell-division in minutes
+  tolerance ; tolerance value in [0,1]
 ]
 
 to setup
   clear-all
-  create-bacteria initial-population [
+  create-bacteria start-population [
     set shape "circle"
     set time 0
-    set resistance initial-resistance
+    set tolerance 0
     setxy random-xcor random-ycor
     update-color
   ]
+  set antibiotic 0
   reset-ticks
 end
 
 to go
   set density current-density
-  ifelse ticks > lag-phase 
+  ifelse ticks >= lag-phase
   [ ; after lag phase
     ask bacteria [
       move
       divide
       expire
-      update-color 
+      update-color
     ]
   ][ ; during lag phase
-    ask bacteria [ 
+    ask bacteria [
       expire
     ]
   ]
-  if count bacteria = 0 [stop]
+  ;if count bacteria = 0 [stop]
+  update-ab
   tick
 end
 
@@ -46,41 +49,85 @@ to move
 end
 
 to divide
-  ifelse time >= generation-time 
-  [
+  ifelse time >= generation-time
+  [ ; generation time has passed
     if random-float 1 > density
       [
       set time 0
-  		hatch 1 [right random 360 forward 1 set time 0]
+      hatch 1 [right random 360 forward 1 set time 0 mutate]
       ]
   ]
   [set time time + 1]
 end
 
-to expire
-  if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
-  if random 100 < antibiotica * (100 - resistance) / 100 [die]
+to mutate
+  if random-float 1 < mut-probability ; bacteria only mutates with a probability of mut-probability
+  [
+    ifelse random 2 = 0 ; increase or decrease tolerance
+      [set tolerance min list 1 (tolerance + mut-jump)]
+      [set tolerance max list -1 (tolerance - mut-jump)]
+  ]
 end
 
-to-report current-density ; get current density
-  report count bacteria / max-od
+to update-ab
+  if ticks >= ab-lag and ( ticks - ab-lag ) mod ab-period = 0
+    [ set antibiotic antibiotic + ab-dose ]
+  set antibiotic antibiotic * exp ( - ln 2  / ab-halftime )
+end
+
+to expire
+  if random-float 1 < immune-efficiency [die] ; bacterium dies due to immune cells
+  if antibiotic > C_0
+  [if random-float 1 < lethality [die]]
 end
 
 to update-color ; calculate color based on input mode
   if color-mode = "time"
-    [set color (time / generation-time) * 6.0 + 12]
-  if color-mode = "resistance"
-    [set color (5 - resistance * 0.05) + 14]
+    [set color (6 - (time / generation-time) * 6.0) + 12]
+  if color-mode = "tolerance"
+  [set color (19 - (max list 0 tolerance * 4))]
+end
+
+to-report lethality
+  report 1 - exp(- (ln 2) / (60 / kill-frequency))
+end
+
+to-report kill-frequency
+  let reduce-ab-efficiency (1 - tolerance * (9 / 10) ) ; factor by which the kill-rate of the antibiotic is reduced, ranges from 1 to 1/10
+  if tolerance <= 0 [set reduce-ab-efficiency 1]
+  report ( reduce-ab-efficiency * ab-efficiency * (1 - exp(-0.5 * (antibiotic - C_0)))) ; 10.7
+end
+
+to-report current-density ; get current density
+  report count bacteria / max-population
+end
+
+to-report avg-tolerance
+  ifelse count bacteria = 0
+    [report -1]
+    [report mean [tolerance] of bacteria]
+end
+
+to-report dev-tolerance
+  ifelse count bacteria <= 1
+    [report -1]
+    [report standard-deviation [tolerance] of bacteria]
+end
+
+to-report random-tolerance
+  ifelse random 2 = 0
+      [report  random-float mut-jump]
+      [report  0 - random-float mut-jump]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-315
-5
-752
-443
+462
+10
+899
+448
 -1
 -1
-13
+13.0
 1
 10
 1
@@ -98,13 +145,13 @@ GRAPHICS-WINDOW
 0
 1
 ticks
-30
+30.0
 
 BUTTON
-210
-20
-310
-70
+8
+10
+63
+58
 NIL
 setup
 NIL
@@ -118,10 +165,10 @@ NIL
 1
 
 BUTTON
-210
-90
-310
-142
+68
+10
+123
+58
 NIL
 go
 T
@@ -135,153 +182,312 @@ NIL
 0
 
 PLOT
-0
-15
-200
-145
+924
+10
+1144
+143
 bacteria
 NIL
 NIL
-0
-100
-0
-100
+0.0
+100.0
+0.0
+100.0
 true
 false
 "" ""
 PENS
-"Pen 1" 1 0 -16579837 true "plot count bacteria" "plot count bacteria"
+"Pen 1" 1.0 0 -16579837 true "plot count bacteria" "plot count bacteria"
 
 INPUTBOX
-5
-155
-150
-198
-initial-population
-40
+3
+144
+113
+204
+start-population
+40.0
 1
 0
 Number
 
 INPUTBOX
-5
-280
-150
-323
+2
+209
+112
+269
 generation-time
-10
+20.0
 1
 0
 Number
 
 INPUTBOX
-5
-235
-150
-278
+117
+209
+227
+269
 lag-phase
-10
+60.0
 1
 0
 Number
 
-SLIDER
-160
-205
-305
-238
-antibiotica
-antibiotica
-0
-100
-50
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-5
-200
-150
-233
-initial-resistance
-initial-resistance
-0
-100
-0
-1
-1
-NIL
-HORIZONTAL
-
 INPUTBOX
-5
-325
-150
-368
-max-od
-400
+119
+144
+229
+204
+max-population
+500.0
 1
 0
 Number
 
 CHOOSER
-160
-325
-305
-370
+8
+68
+118
+113
 color-mode
 color-mode
-"time" "resistance"
-0
+"time" "tolerance"
+1
 
 INPUTBOX
-160
-155
-305
-198
-immune-efficiency
-0.04
+266
+145
+352
+205
+mut-probability
+0.1
 1
 0
 Number
+
+PLOT
+924
+150
+1144
+283
+tolerance
+NIL
+NIL
+0.0
+101.0
+0.0
+0.6
+true
+false
+"" ""
+PENS
+"mean" 1.0 0 -16514816 true "plot avg-tolerance" "plot avg-tolerance"
+
+INPUTBOX
+5
+437
+112
+497
+ab-dose
+0.4
+1
+0
+Number
+
+PLOT
+924
+290
+1144
+423
+antibiotic
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"Pen 1" 1.0 0 -16514816 true "plot antibiotic" "plot antibiotic"
+
+INPUTBOX
+357
+145
+444
+205
+mut-jump
+0.1
+1
+0
+Number
+
+INPUTBOX
+5
+369
+111
+429
+ab-halftime
+60.0
+1
+0
+Number
+
+INPUTBOX
+119
+436
+229
+496
+ab-period
+20.0
+1
+0
+Number
+
+INPUTBOX
+5
+502
+111
+562
+ab-lag
+300.0
+1
+0
+Number
+
+INPUTBOX
+121
+305
+231
+365
+c_0
+1.2
+1
+0
+Number
+
+TEXTBOX
+7
+117
+157
+142
+Bacteria
+20
+0.0
+1
+
+TEXTBOX
+6
+276
+156
+301
+Antibiotic
+20
+0.0
+1
+
+TEXTBOX
+268
+108
+418
+133
+Tolerances
+20
+0.0
+1
+
+INPUTBOX
+265
+214
+444
+274
+immune-efficiency
+0.015
+1
+0
+Number
+
+INPUTBOX
+5
+306
+110
+366
+ab-efficiency
+10.7
+1
+0
+Number
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+A simulation of bacterial growth and the development of antimicrobial tolerance under the influence of antibiotics.
 
 ## HOW IT WORKS
-
-(what rules the agents use to create the overall behavior of the model)
+In an optimal environment, bacteria grow exponentially through cell division.
+Antibiotics inhibit this growth by killing bacteria.
+Under selective pressure, bacteria can develop tolerancs to counteract the effects of antibiotics.
 
 ## HOW TO USE IT
+The bacterial growth parameters can be adjusted in the Bacteria section.
 
-(how to use the model, including a description of each of the items in the Interface tab)
+Bacteria:
 
+* `max-population` maximum number of cells
+* `generation-time` time it takes cells to double
+* `lag-phase` time before exponential growth begins
+* `start-population` initial population size
+
+The antibiotic parameters can be adjusted in the antibiotics section.
+
+
+
+Antibiotic:
+
+* `ab-efficiency` effectiveness of the antibiotic as a reduction of the generation rate
+* `C_0` minimum concentration required for the antibiotic to be effective
+* `ab-halftime` time for the antibiotic concentration to halve
+
+Variable Parameters
+
+* `ab-dose` antibiotic dose in µg/ml
+* `ab-period` time between antibiotic applications
+* `ab-lag` delay before the antibiotic takes effect
+
+Antimicrobial tolerance develops through mutations inherited over generations (increases or decreases in tolerance).
+The probability and magnitude of these changes can be adjusted in the resistance section.
+
+* `mut-probability` probability of a mutation occurring
+* `mut-jump` amount of tolerance increase or decrease
+
+To simulate the immune system, bacteria have a certain probability of dying independent of antibiotic tolerance.
+
+* `immune-efficiceny` probability of bacterial death due to the immune system
 ## THINGS TO NOTICE
+E Coli K12
 
-(suggested things for the user to notice while running the model)
+* `set max-population 500`
+* `set generation-time 20`
+* `set lag-phase 60`
 
+Ampicillin
+
+* `set ab-dose 10.7`
+* `set C_0 1.2`
+* `set ab-halftime 60`
+
+Suggestion
+
+* `set start-population 40`
+* `set immune-efficiency 0.02`
+* `set mut-probability 0.1`
+* `set mut-jump 0.1`
+* `set ab-lag 300`
 ## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
+Experiment with varying the values of `ab-dose` and `ab-period`.
 ## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+This model currently simulates tolerance as a decrease in antibiotic efficiency.
+To simulate resistance, one could implement an offset for the MHK and C_0 parameter.
 @#$#@#$#@
 default
 true
@@ -595,15 +801,15 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 default
-0
--0.2 0 0 1
-0 1 1 0
-0.2 0 0 1
+0.0
+-0.2 0 0.0 1.0
+0.0 1 1.0 0.0
+0.2 0 0.0 1.0
 link direction
 true
 0
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-
+0
 @#$#@#$#@
